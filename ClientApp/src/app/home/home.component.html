@@ -1,0 +1,140 @@
+<div class="container-fluid">
+
+  <div class="row">
+    <div class="col-sm-4">
+      <div class="card bg-light">
+        <ul class="list-group list-group-flush">
+          <li class="list-group-item bg-light">
+            <div style="float: left;">
+            <button type="button" class="btn btn-sm btn-success" (click)="start();">Start</button>&nbsp;
+            <button type="button" class="btn btn-sm btn-secondary" (click)="pause();">Pause</button>&nbsp;
+            <button type="button" class="btn btn-sm btn-warning" (click)="reset();">Reset</button>&nbsp;
+          </div>
+          <div style="float: left;">
+            <select 
+            class="form-control" [(ngModel)]="selectedResolution" (change)="changeHighstockResolution(selectedResolution)">
+            <option *ngFor="let resolution of resolutionList" [value]="resolution.value">{{ resolution.value }}</option>
+          </select>
+          </div>
+          </li>
+          <li class="list-group-item bg-light">
+            <button type="button" class="btn btn-sm btn-secondary"
+              (click)="displayHighstock('NO_INDICATOR', 200, 5 );">Vol</button>&nbsp;
+            <button type="button" class="btn btn-sm btn-secondary" (click)="displayHighstock('RSI', 200, 5);">RSI</button>&nbsp;
+            <button type="button" class="btn btn-sm btn-secondary" (click)="displayHighstock('MACD', 200, 5);">MACD</button>&nbsp;
+            <button type="button" class="btn btn-sm btn-secondary"
+              (click)="displayHighchart('INIT');">reset</button>&nbsp;
+          </li>
+        </ul>
+      </div>
+    </div>
+
+    <!-- PREDICTION -->
+    <div class="col-sm-2">
+      <div class="row">
+        <li *ngFor="let pred of predictionList">
+          <i *ngIf="pred.future>0" style="color: green;"
+            class="fas fa-arrow-up fa-lx"><span>{{pred.modelName}}</span></i>
+          <i *ngIf="pred.future<=0" style="color: red;"
+            class="fas fa-arrow-down fa-1x	"><span>{{pred.modelName}}</span></i>
+        </li>
+      </div>
+    </div>
+
+    <!-- GANT CHART -->
+    <div class="col-sm-4 ">
+      <h5 class="card-title">Base line : Iteration : <span class="label label-default">{{iteration}}</span></h5>
+      <div class="row">
+        <div class="col-sm-12">
+          <svg height="30" width="320">
+            <line x1="0" y1="0" x2="320" y2="0" style="stroke:rgb(158, 168, 158);stroke-width:30"></line>
+            <line x1="0" y1="0" x2="50" y2="0" style="stroke:rgb(129, 240, 144);stroke-width:30"></line>
+            <line x1="270" y1="0" x2="320" y2="0" style="stroke:rgb(248, 151, 151);stroke-width:30"></line>
+            <circle [attr.cx]="cx" cy="7" r="3" stroke="red" fill="transparent" stroke-width="5" />
+          </svg>
+        </div>
+      </div>
+
+      <div class="row">
+        <div class="col-sm-3">
+          Min : <span class="label label-default"><b>{{oilMin}}</b></span>
+        </div>
+        <div class="col-sm-3">
+          <i *ngIf="isArrowUp" style="color: green;" class="fas fa-arrow-up fa-lx	"></i>
+          <i *ngIf="isArrowDown" style="color: red;" class="fas fa-arrow-down fa-1x	"></i>
+          Value : <span class="label label-default"><b>{{oilLast}}</b></span>
+        </div>
+        <div class="col-sm-3">
+          Max : <span class="label label-default"><b>{{oilMax}}</b></span>
+        </div>
+        <div class="col-sm-3">
+          <div *ngIf="isBuy" class="alert alert-success" style="height: 30px;padding-top: 0;margin-bottom: 0;">
+            <strong>Buy!</strong>
+          </div>
+
+          <div *ngIf="isSell" class="alert alert-danger" style="height: 30px;padding-top: 0;margin-bottom: 0;">
+            <strong>Sell!</strong>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- INDICATORS PANEL -->
+    <div class="col-sm-2 ">
+      <table>
+        <tr>
+          <td>
+            <table>
+              <tr>
+                <td>Rsi</td>
+                <td><b>{{predictionList[0].rsi}}</b></td>
+              </tr>
+              <tr>
+                <td>Macd</td>
+                <td><b>{{predictionList[0].macd}}</b></td>
+              </tr>
+              <tr>
+                <td>Sign</td>
+                <td><b>{{predictionList[0].macdSign}}</b></td>
+              </tr>
+              <tr>
+                <td>Hist</td>
+                <td><b>{{predictionList[0].macdHist}}</b></td>
+              </tr>
+              <tr>
+                <td>&nbsp;</td>
+                <td>&nbsp;</td>
+              </tr>
+            </table>
+          </td>
+          <td>
+            <table>
+              <tr
+                *ngFor="let data of liveChartData.c.slice(liveChartData.c.length -5, liveChartData.c.length+1); let i = index">
+                <td *ngIf="liveChartData.color[liveChartData.color.length-5 + i] == 0" style="color: gray;">
+                  {{data| number}}</td>
+                <td *ngIf="liveChartData.color[liveChartData.color.length-5 + i] == 1" style="color: green;">
+                  {{data| number}}</td>
+                <td *ngIf="liveChartData.color[liveChartData.color.length-5 + i] == -1" style="color: red;">
+                  {{data| number}}</td>
+              </tr>
+            </table>
+          </td>
+        </tr>
+      </table>
+     
+    </div>
+  </div>
+
+  <div class="row">
+    <div class="col-sm-7">
+      <highcharts-chart constructorType='stockChart' [Highcharts]="highcharts" [options]="chartOptions"
+        style="width: 100%; height: 550px; display: block;">
+      </highcharts-chart>
+    </div>
+    <div class="col-sm-5">
+      <highcharts-chart [Highcharts]="highcharts2" [options]="chartOptions2"
+        style="width: 100%; height: 550px; display: block;">
+      </highcharts-chart>
+    </div>
+  </div>
