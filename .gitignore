@@ -229,4 +229,3 @@ _Pvt_Extensions
 
 # FAKE - F# Make
 .fake/
-ClientApp/src/app/app.global.ts
