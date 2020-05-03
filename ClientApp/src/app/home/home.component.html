@@ -6,22 +6,25 @@
         <ul class="list-group list-group-flush">
           <li class="list-group-item bg-light">
             <div style="float: left;">
-            <button type="button" class="btn btn-sm btn-success" (click)="start();">Start</button>&nbsp;
-            <button type="button" class="btn btn-sm btn-secondary" (click)="pause();">Pause</button>&nbsp;
-            <button type="button" class="btn btn-sm btn-warning" (click)="reset();">Reset</button>&nbsp;
-          </div>
-          <div style="float: left;">
-            <select 
-            class="form-control" [(ngModel)]="selectedResolution" (change)="changeHighstockResolution(selectedResolution)">
-            <option *ngFor="let resolution of resolutionList" [value]="resolution.value">{{ resolution.value }}</option>
-          </select>
-          </div>
+              <button type="button" class="btn btn-sm btn-success" (click)="start();">Start</button>&nbsp;
+              <button type="button" class="btn btn-sm btn-secondary" (click)="pause();">Pause</button>&nbsp;
+              <button type="button" class="btn btn-sm btn-warning" (click)="reset();">Reset</button>&nbsp;
+            </div>
+            <div style="float: left;">
+              <select class="form-control" [(ngModel)]="selectedResolution"
+                (change)="changeHighstockResolution(selectedResolution)">
+                <option *ngFor="let resolution of resolutionList" [value]="resolution.value">{{ resolution.value }}
+                </option>
+              </select>
+            </div>
           </li>
           <li class="list-group-item bg-light">
             <button type="button" class="btn btn-sm btn-secondary"
               (click)="displayHighstock('NO_INDICATOR', 200, 5 );">Vol</button>&nbsp;
-            <button type="button" class="btn btn-sm btn-secondary" (click)="displayHighstock('RSI', 200, 5);">RSI</button>&nbsp;
-            <button type="button" class="btn btn-sm btn-secondary" (click)="displayHighstock('MACD', 200, 5);">MACD</button>&nbsp;
+            <button type="button" class="btn btn-sm btn-secondary"
+              (click)="displayHighstock('RSI', 200, 5);">RSI</button>&nbsp;
+            <button type="button" class="btn btn-sm btn-secondary"
+              (click)="displayHighstock('MACD', 200, 5);">MACD</button>&nbsp;
             <button type="button" class="btn btn-sm btn-secondary"
               (click)="displayHighchart('INIT');">reset</button>&nbsp;
           </li>
@@ -39,6 +42,9 @@
             class="fas fa-arrow-down fa-1x	"><span>{{pred.modelName}}</span></i>
         </li>
       </div>
+      <highcharts-chart [Highcharts]="highcharts3" [options]="chartOptions3"
+        style="width: 100%; height: 150px; display: block;">
+      </highcharts-chart>
     </div>
 
     <!-- GANT CHART -->
@@ -122,7 +128,7 @@
           </td>
         </tr>
       </table>
-     
+
     </div>
   </div>
 

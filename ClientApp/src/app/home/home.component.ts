@@ -2,8 +2,8 @@ import { Component } from '@angular/core';
 import { List } from 'ts-generic-collections-linq';
 import { HttpService, HttpSettings } from '../service/http.service';
 import { ChartService } from '../service/chart.service';
-import { WebsocketService } from "./../service/websocket.service";
-import  {AppGlobal} from "./../app.global";
+import { WebsocketService } from './../service/websocket.service';
+import { AppGlobal } from './../app.global';
 
 import * as Highcharts from 'highcharts';
 import HC_HIGHSTOCK from 'highcharts/modules/stock';
@@ -31,22 +31,30 @@ export class HomeComponent {
   volume = [] as any;
   highcharts = Highcharts;
   highcharts2 = Highcharts;
+  highcharts3 = Highcharts;
   chartOptions: Highcharts.Options;
   chartOptions2: Highcharts.Options;
-  resolutionList : Array<{}>;
+  chartOptions3: Highcharts.Options;
+  resolutionList: Array<{}>;
   resolution: number;
-  selectedResolution : any;
+  selectedResolution: any;
   oilLast: number;
   oilPreviousList: Array<number>;
-  oilMin: number = 0;
-  oilMax: number = 0;
-  cx: number = 0;
-  iteration: number = 0;
-  isArrowDown: boolean = false;
-  isArrowUp: boolean = false;
-  isBuy: boolean = false;
-  isSell: boolean = false;
+  oilMin = 0;
+  oilMax = 0;
+  cx = 0;
+  iteration = 0;
+  isArrowDown = false;
+  isArrowUp = false;
+  isBuy = false;
+  isSell = false;
   predictionList: Array<any>;
+  volatilityIndicator: number;
+  volatilityIndicatorReset: boolean;
+  valatilityIndicatorUI: number;
+  volatilityData = [] as any;
+  volatilityData2 = [] as any;
+  volatilityAverage : number;
 
   constructor(
     private highLowList: List<number>,
@@ -69,16 +77,22 @@ export class HomeComponent {
     this.predictionList[0].macd = 0;
     this.predictionList[0].macdHist = 0;
     this.predictionList[0].macdSign = 0;
-    this.displayHighstock("NO_INDICATOR", 200, "5");
-    this.displayHighchart("INIT");
+    this.displayHighstock('NO_INDICATOR', 200, '5');
+    this.displayHighchart('INIT');
+    this.displayHighchart3();
+    this.volatilityAverage = 0;
 
     this.resolutionList = [
-      { key: 1, value: "5,200" },
-      { key: 2, value: "30,300" },
-      { key: 3, value: "60,300" },
-      { key: 4, value: "60,500" },
-  ]
-  this.selectedResolution = "5,200";
+      { key: 1, value: '5,200' },
+      { key: 2, value: '30,300' },
+      { key: 3, value: '60,300' },
+      { key: 4, value: '60,500' },
+    ]
+    this.selectedResolution = '5,200';
+
+    this.volatilityIndicatorReset = false;
+    this.volatilityIndicator = 0;
+    const timerId = setInterval(() => this.volatilityIndicatorReset = true, 4000);
   }
 
   async displayHighstock(indicator: string, numberOfPoint: number, resolution: string) {
@@ -142,13 +156,13 @@ export class HomeComponent {
     }
   }
 
-  changeHighstockResolution (key){
+  changeHighstockResolution(key) {
     let params = key.split(',');
-    this.displayHighstock("NO_INDICATOR", params[1], params[0]);
+    this.displayHighstock('NO_INDICATOR', params[1], params[0]);
   }
 
   async displayHighchart(type: string) {
-    if (type == "INIT") {
+    if (type == 'INIT') {
       this.liveChartData = await this.getIntradayData(12, 5);
       this.liveChartData.color = [];
 
@@ -165,10 +179,57 @@ export class HomeComponent {
     this.chartOptions2 = {
       series: [{ data: this.liveChartData.c, type: 'line' }],
       title: {
-        text: "Live"
+        text: 'Live'
       },
       xAxis: { type: 'datetime', dateTimeLabelFormats: { month: '%e. %b', year: '%b' }, title: { text: 'Date' } },
     };
+  }
+
+  async displayHighchart3() {
+    this.chartOptions3 = {
+      chart: {
+        animation: false
+      },
+      yAxis: {
+        title: {
+          text: null
+        },
+        plotLines: [{
+          color: 'red', // Color value
+          value: this.volatilityAverage, // Value of where the line will appear
+          width: 2 // Width of the line    
+        }]
+      },
+      series: [{ data: this.volatilityData, type: 'line', animation: false }],
+      title: {
+        text: ''
+      },
+      legend: {
+        enabled: false,
+        align: 'right',
+      },
+      xAxis: {
+        title: {
+          text: null
+        }
+      },
+    };
+  }
+
+  calculateVolatility() {
+    if (this.volatilityIndicatorReset) {
+      this.volatilityData.push([this.volatilityData.length + 1, this.volatilityIndicator]);
+      this.volatilityData2.push(this.volatilityIndicator);
+      this.displayHighchart3();
+      this.valatilityIndicatorUI = this.volatilityIndicator;
+      this.volatilityIndicator = 0;
+      this.volatilityIndicatorReset = false;
+      this.volatilityAverage = this.volatilityData2.reduce((a,b) => a + b, 0) / this.volatilityData2.length;
+      if (this.volatilityData.length > 80) { 
+        this.volatilityData.splice(0, 1); 
+        this.volatilityData2.splice(0, 1);}
+    }
+    this.volatilityIndicator++;
   }
 
   start() {
@@ -177,6 +238,7 @@ export class HomeComponent {
     this.socketService.openListener(false);
     this.socketService.onMessage().subscribe((result: any) => {
 
+      this.calculateVolatility();
       this.SaveIntradayData(result.data[0]);
 
       this.setColor(result.data[0].p);
@@ -187,7 +249,7 @@ export class HomeComponent {
       this.getPrediction(this.liveChartData).then((p) => {
         this.predictionList = p;
       });
-      this.displayHighchart("CONTINUE");
+      this.displayHighchart('CONTINUE');
       this.processLastData(result);
     });
   }
@@ -210,13 +272,12 @@ export class HomeComponent {
 
     if (data.type == 'trade') {
       this.oilLast = Math.round(data.data[0].p * 100) / 100;
-      console.log(this.oilLast);
     }
     else {
       return;
     }
 
-    //Set Min/Max value
+    // Set Min/Max value
     if (this.oilLast > this.oilMax) {
       this.setMax(this.oilLast);
     }
@@ -227,7 +288,7 @@ export class HomeComponent {
     //Plot last price
     this.cx = (this.oilLast - this.oilMin) * 320 / (this.oilMax - this.oilMin);
 
-    //Show arrow Up/Down
+    // Show arrow Up/Down
     if (this.oilLast > this.oilPreviousList[0] && this.oilLast > this.oilPreviousList[1] && this.oilLast > this.oilPreviousList[2]) {
       this.isArrowUp = true;
       this.isArrowDown = false;
@@ -237,11 +298,11 @@ export class HomeComponent {
       this.isArrowDown = true;
     }
 
-    //Buy/Sell indicator
-    if (this.oilLast < (this.oilMax - this.oilMin) / 9 + this.oilMin) this.isBuy = true; else this.isBuy = false;
-    if (this.oilLast > (this.oilMax - this.oilMin) / 9 * 8 + this.oilMin) this.isSell = true; else this.isSell = false;
+    // Buy/Sell indicator
+    if (this.oilLast < (this.oilMax - this.oilMin) / 9 + this.oilMin) { this.isBuy = true; } else { this.isBuy = false; }
+    if (this.oilLast > (this.oilMax - this.oilMin) / 9 * 8 + this.oilMin) { this.isSell = true; } else { this.isSell = false; }
 
-    //Update the history for the last 3 values
+    // Update the history for the last 3 values
     for (let i = 0; i < 3; i++) {
       if (i == 2) { this.oilPreviousList[i] = this.oilLast; continue; }
       this.oilPreviousList[i] = this.oilPreviousList[i + 1];
@@ -262,14 +323,14 @@ export class HomeComponent {
 
   setMax = (max: any) => {
     let snd = new Audio(this.appGlobal.soundUp);
-    snd.play();
+    // snd.play();
 
     this.oilMax = max;
     this.highLowList.add(max);
 
-    //Re-evaluate min (adjust the max % 2.5)
+    // Re-evaluate min (adjust the max % 2.5)
     if ((this.highLowList.max(x => x) - this.highLowList.min(x => x)) / max * 100 > 1.4) {
-      console.log("remove lower");
+      console.log('remove lower');
       this.highLowList.remove(p => p == this.highLowList.min(x => x));
       this.oilMin = this.highLowList.min(x => x);
     }
@@ -277,13 +338,13 @@ export class HomeComponent {
 
   setMin = (min: any) => {
     let snd = new Audio(this.appGlobal.soundDown);
-    snd.play();
+    // snd.play();
     this.oilMin = min;
     this.highLowList.add(min);
 
-    //Re-evaluate max adjust the max % 2.5
+    // Re-evaluate max adjust the max % 2.5
     if ((this.highLowList.max(x => x) - this.highLowList.min(x => x)) / min * 100 > 1.4) {
-      console.log("remove higher");
+      console.log('remove higher');
       this.highLowList.remove(p => p == this.highLowList.max(x => x));
       this.oilMax = this.highLowList.max(x => x);
     }
@@ -302,36 +363,37 @@ export class HomeComponent {
 
   async getIntradayData(numberPoints, resolution): Promise<any> {
     const httpSetting: HttpSettings = {
-      method: "GET",
-      url: "https://finnhub.io/api/v1/forex/candle?symbol=OANDA:WTICO_USD&resolution=" + resolution + "&count=" + numberPoints + "&token=" + this.appGlobal.finnhubKey,
+      method: 'GET',
+      // tslint:disable-next-line: max-line-length
+      url: 'https://finnhub.io/api/v1/forex/candle?symbol=OANDA:WTICO_USD&resolution=' + resolution + '&count=' + numberPoints + '&token=' + this.appGlobal.finnhubKey,
     };
     return await this.httpService.xhr(httpSetting);
   }
 
   async SaveIntradayData(data) {
     const httpSetting: HttpSettings = {
-      method: "POST",
+      method: 'POST',
       data: data,
-      url: "https://localhost:5001/api/Intraday/Add/",
+      url: 'https://localhost:5001/api/Intraday/Add/',
     };
     return await this.httpService.xhr(httpSetting);
   }
 
   async getPrediction(data): Promise<any> {
 
-    var myList = [];
+    const myList = [];
 
     data.c.map((item, index) => {
       myList.push({
         Price: data.c[index],
         Volume: data.v[index],
-      })
+      });
     });
 
     const httpSetting: HttpSettings = {
-      method: "POST",
+      method: 'POST',
       data: myList,
-      url: "https://localhost:5001/api/AI/GetPrediction",
+      url: 'https://localhost:5001/api/AI/GetPrediction',
     };
     return await this.httpService.xhr(httpSetting);
   }
