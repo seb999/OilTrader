@@ -32,7 +32,7 @@ namespace OilTrader.Controllers
             newItem.P = intraday.P;
             newItem.V = intraday.V;
             newItem.dateAdded = DateTime.Now.ToString();
-
+   
             DbContext.Add(newItem);
             //DbContext.SaveChanges();
             return DbContext.Intraday.ToList();
