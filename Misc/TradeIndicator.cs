@@ -8,7 +8,7 @@ namespace OilTrader.Misc
 {
     public static class TradeIndicator{
 
-         public static void CalculateIndicator(ref List<ModelInput> quotationList)
+        public static void CalculateIndicator(ref List<ModelInput> quotationList)
         {
             var data = quotationList.Select(p=>p.Price).ToArray();
             int beginIndex;
